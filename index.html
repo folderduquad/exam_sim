@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>考试模拟器</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#1a73e8;--blue-d:#1558b0;--blue-l:#e8f1fd;
+  --ink:#1f2d3d;--ink-2:#5b6b7f;--line:#dbe7f5;
+  --bg:#f4f8fe;--ok:#1e9e6a;--bad:#e0483d;--warn:#e8a33d;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:268px;flex:0 0 268px;background:#fff;border-right:1px solid var(--line);padding:18px 14px;display:flex;flex-direction:column;gap:16px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.brand{display:flex;gap:10px;align-items:center;padding:2px 6px 14px;border-bottom:1px solid var(--line)}
+.brand-logo{width:38px;height:38px;flex:0 0 38px;border-radius:11px;background:linear-gradient(135deg,#1a73e8,#5aa2ff);color:#fff;display:grid;place-items:center;font-weight:700;font-size:17px;box-shadow:0 4px 10px rgba(26,115,232,.28)}
+.brand-title{font-size:15px;font-weight:700;letter-spacing:.3px}
+.brand-sub{font-size:11px;color:var(--ink-2);margin-top:3px;line-height:1.3}
+.nav{display:flex;flex-direction:column;gap:6px}
+.nav button{display:flex;align-items:center;gap:10px;padding:11px 13px;border:none;background:transparent;border-radius:10px;font-size:14px;color:var(--ink-2);cursor:pointer;text-align:left;font-family:inherit;transition:.15s;width:100%}
+.nav button::before{content:'';width:7px;height:7px;border-radius:50%;background:#c6d8ef;flex:0 0 7px;transition:.15s}
+.nav button:hover{background:var(--blue-l);color:var(--blue-d)}
+.nav button.active{background:var(--blue);color:#fff;font-weight:600;box-shadow:0 4px 12px rgba(26,115,232,.28)}
+.nav button.active::before{background:#fff}
+.side-user{margin-top:auto;border-top:1px solid var(--line);padding-top:14px}
+.u-name{font-size:14px;font-weight:600;word-break:break-all}
+.u-meta{font-size:11.5px;color:var(--ink-2);margin-top:4px;line-height:1.5}
+.u-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.mode-tag{font-size:11px;padding:2px 8px;border-radius:20px;display:inline-block;margin-top:6px;font-weight:600}
+.mode-local{background:#fdf0ef;color:var(--bad)}
+.mode-cloud{background:#eefaf4;color:var(--ok)}
+.main{flex:1;padding:26px 32px 70px;max-width:1020px;min-width:0}
+.panel-title{font-size:21px;font-weight:700;margin-bottom:5px}
+.panel-desc{color:var(--ink-2);font-size:13px;margin-bottom:20px;line-height:1.6}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(26,115,232,.05)}
+.card h3{font-size:15px;margin-bottom:12px;font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.stat .v{font-size:26px;font-weight:700;color:var(--blue-d);line-height:1.1}
+.stat .l{font-size:12px;color:var(--ink-2);margin-top:6px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;color:var(--ink-2);font-weight:600;font-size:12px;padding:10px 8px;border-bottom:1px solid var(--line)}
+td{padding:11px 8px;border-bottom:1px solid #eef4fb;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.btn{border:none;border-radius:10px;padding:10px 18px;font-size:14px;font-family:inherit;cursor:pointer;background:var(--blue);color:#fff;font-weight:600;transition:.15s}
+.btn:hover{background:var(--blue-d)}
+.btn.ghost{background:var(--blue-l);color:var(--blue-d)}
+.btn.ghost:hover{background:#d6e7fb}
+.btn.small{padding:6px 12px;font-size:12.5px;border-radius:8px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.link{background:none;border:none;color:var(--blue);cursor:pointer;font-size:13px;font-family:inherit;padding:4px}
+.link:hover{text-decoration:underline}
+.diff-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.diff-card{border:2px solid var(--line);border-radius:14px;padding:18px;background:#fff;cursor:pointer;transition:.15s;position:relative}
+.diff-card:hover{border-color:#a9caf5;transform:translateY(-1px)}
+.diff-card.active{border-color:var(--blue);background:var(--blue-l);box-shadow:0 6px 18px rgba(26,115,232,.12)}
+.diff-card .dname{font-size:16px;font-weight:700;margin-bottom:6px;color:var(--blue-d)}
+.diff-card .ddesc{font-size:12.5px;color:var(--ink-2);line-height:1.6}
+.diff-card .badge{position:absolute;top:12px;right:12px;background:var(--blue);color:#fff;font-size:11px;padding:2px 8px;border-radius:20px}
+.q{padding:18px 0;border-bottom:1px dashed var(--line)}
+.q:last-child{border-bottom:none}
+.q-stem{font-size:15px;line-height:1.8;display:flex;gap:10px;margin-bottom:12px}
+.q-no{flex:0 0 24px;height:24px;border-radius:8px;background:var(--blue-l);color:var(--blue-d);display:grid;place-items:center;font-size:12.5px;font-weight:700}
+.q-opts{display:flex;flex-direction:column;gap:8px;padding-left:34px}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:10px 14px;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;font-size:14px;transition:.12s;background:#fff;line-height:1.6}
+.opt:hover{border-color:#a9caf5;background:#fafcff}
+.opt input{margin-top:4px;accent-color:var(--blue);cursor:pointer;flex:0 0 auto}
+.opt.correct{border-color:var(--ok);background:#eefaf4}
+.opt.wrong{border-color:var(--bad);background:#fdf0ef}
+.test-bar{display:flex;gap:12px;margin-top:6px;flex-wrap:wrap}
+.result-head{display:flex;gap:26px;align-items:center;flex-wrap:wrap}
+.score-ring{width:126px;height:126px;border-radius:50%;display:grid;place-items:center;position:relative;background:conic-gradient(var(--blue) calc(var(--p)*1%),#e6eefb 0)}
+.score-ring::before{content:'';position:absolute;inset:11px;background:#fff;border-radius:50%}
+.score-ring b{position:relative;font-size:30px;color:var(--blue-d)}
+.result-info{flex:1;min-width:180px}
+.result-info .big{font-size:18px;font-weight:700;margin-bottom:8px}
+.result-info .sub{font-size:13.5px;color:var(--ink-2);line-height:1.9}
+.stu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.stu-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.stu-head{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+.avatar{width:42px;height:42px;flex:0 0 42px;border-radius:12px;background:linear-gradient(135deg,#4a9bff,#1a73e8);color:#fff;display:grid;place-items:center;font-weight:700;font-size:17px}
+.stu-name{font-size:15px;font-weight:700}
+.stu-meta{font-size:11.5px;color:var(--ink-2);margin-top:3px;line-height:1.4}
+.stu-stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.chip{background:var(--blue-l);color:var(--blue-d);font-size:12px;padding:4px 10px;border-radius:20px;font-weight:600}
+.stu-hist{font-size:12.5px;color:var(--ink-2);line-height:1.9;border-top:1px dashed var(--line);padding-top:9px}
+.lock{text-align:center;padding:44px 20px}
+.lock-icon{font-size:34px;margin-bottom:14px}
+.lock .modal-actions{justify-content:center;margin-top:18px}
+.mask{position:fixed;inset:0;background:rgba(20,45,80,.4);backdrop-filter:blur(3px);display:grid;place-items:center;z-index:100;padding:20px;overflow-y:auto}
+.modal{background:#fff;border-radius:18px;width:100%;max-width:470px;padding:22px 24px 24px;box-shadow:0 20px 50px rgba(20,45,80,.25);max-height:92vh;overflow-y:auto;animation:pop .18s ease}
+@keyframes pop{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px}
+.modal-title{font-size:19px;font-weight:700}
+.modal-sub{font-size:12.5px;color:var(--ink-2);margin-top:5px;line-height:1.5}
+.x{background:none;border:none;font-size:24px;line-height:1;color:#9db1c9;cursor:pointer;padding:0 4px}
+.x:hover{color:var(--ink)}
+.field{display:block;margin-bottom:13px}
+.field>span{display:block;font-size:12.5px;color:var(--ink-2);margin-bottom:6px;font-weight:600}
+.field>span em{color:var(--bad);font-style:normal}
+.field input,.field select{width:100%;padding:10px 13px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;color:var(--ink);background:#fbfdff;outline:none;transition:.15s}
+.field input:focus,.field select:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(26,115,232,.1)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pw{position:relative}
+.pw input{padding-right:60px}
+.pw-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:var(--blue-l);border:none;color:var(--blue-d);font-size:12px;padding:5px 10px;border-radius:7px;cursor:pointer;font-family:inherit}
+.pw-toggle:hover{background:#d6e7fb}
+.modal-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.modal-foot{margin-top:14px;text-align:center}
+.err{color:var(--bad);font-size:13px;min-height:18px;margin-top:2px}
+.hint{font-size:12px;color:var(--ink-2);background:var(--blue-l);border-radius:9px;padding:9px 12px;margin-bottom:14px;line-height:1.7}
+.empty{text-align:center;color:var(--ink-2);font-size:13.5px;padding:34px 10px;line-height:1.9}
+.empty b{display:block;font-size:15px;color:var(--ink);margin-bottom:6px}
+.loading{text-align:center;padding:40px;color:var(--ink-2);font-size:14px}
+.spinner{width:26px;height:26px;border:3px solid var(--blue-l);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.banner{background:#fff8e6;border:1px solid #f3d98a;color:#8a6200;border-radius:10px;padding:10px 14px;font-size:12.5px;line-height:1.7;margin-bottom:16px}
+@media(max-width:840px){
+  .layout{flex-direction:column}
+  .sidebar{width:100%;flex:none;height:auto;position:static;border-right:none;border-bottom:1px solid var(--line)}
+  .nav{flex-direction:row;flex-wrap:wrap}
+  .nav button{width:auto;flex:1 1 40%}
+  .main{padding:18px 16px 60px}
+  .row2{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo">考</div>
+      <div>
+        <div class="brand-title">考试模拟器</div>
+        <div class="brand-sub">华东师大二附中松江实验</div>
+      </div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-user" id="sideUser"></div>
+  </aside>
+  <main class="main" id="main"></main>
+</div>
+
+<script>
+/* =========================================================
+   0. 配置 —— 站长只需改这里（或让用户在页面里填）
+   ========================================================= */
+const CONFIG = {
+  // Supabase 项目地址，如 https://xxxx.supabase.co（留空 = 纯本地模式）
+  SUPABASE_URL: '',
+  // Supabase anon public key（可公开，但要配合 RLS 策略）
+  SUPABASE_ANON_KEY: '',
+  // AI 出题代理地址（Cloudflare Worker / Vercel 等，留空 = 本地出题引擎）
+  AI_PROXY_URL: ''
+};
+// 允许用户在浏览器里覆盖配置
+(function loadOverrides(){
+  try{
+    const o = JSON.parse(localStorage.getItem('sms_config') || '{}');
+    Object.keys(CONFIG).forEach(k => { if(o[k]) CONFIG[k] = o[k]; });
+  }catch(e){}
+})();
+function isCloud(){ return !!(CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY); }
+
+/* =========================================================
+   1. 常量
+   ========================================================= */
+const SCHOOL_DEFAULT = '华东师范大学第二附属实验中学（上海松江）';
+const GRADES = ['六年级','七年级','八年级','九年级'];
+const DIFFS  = ['基础','中等','提高'];
+const KEY    = 'sms_exam_sim_v3';
+const QCOUNT = 10;
+
+const CURRICULUM = {
+  '六年级': ['分数的四则运算','比和比例','百分比的应用','圆与扇形的周长和面积'],
+  '七年级': ['有理数的运算','整式的加减','一元一次方程','余角与补角'],
+  '八年级': ['二次根式的化简','一元二次方程的解法','正比例与反比例函数','勾股定理'],
+  '九年级': ['二次函数与顶点','相似三角形的性质','锐角三角比','弧长与扇形面积']
+};
+
+/* =========================================================
+   2. 工具
+   ========================================================= */
+const ri = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+const pick = a => a[Math.floor(Math.random()*a.length)];
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){const t=a%b;a=b;b=t;} return a||1; }
+function fracStr(n,d){ if(d<0){n=-n;d=-d;} const g=gcd(n,d); n/=g; d/=g; return d===1?String(n):`${n}/${d}`; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtDate(ts){ const d=new Date(ts); const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; }
+
+async function sha256(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('sms_salt_v1::' + str));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+/* =========================================================
+   3. 本地出题引擎（AI 不可用时的回退）
+   ========================================================= */
+function buildQ(stem, correct, wrongPool, explain){
+  const cs = String(correct);
+  const used = new Set([cs]);
+  const wrongs = [];
+  for(const w of wrongPool){
+    if(w===null||w===undefined) continue;
+    const s = String(w);
+    if(!used.has(s)){ used.add(s); wrongs.push(s); }
+    if(wrongs.length===3) break;
+  }
+  let g=0;
+  while(wrongs.length<3 && g++<60){
+    const num = Number(cs);
+    const cand = (cs!=='' && !isNaN(num)) ? (g%2===0?String(num+g):String(num-g)) : cs+' '.repeat(g);
+    if(!used.has(cand)){ used.add(cand); wrongs.push(cand); }
+  }
+  const options = shuffle([cs, ...wrongs]);
+  return { stem, options, answer: options.indexOf(cs), explain };
+}
+
+function g6Percent(d){ const p=pick([10,20,25,50,75,80,120,150]); const base=20*ri(1,d===1?6:12); const ans=base*p/100;
+  return buildQ(`计算：${base} 的 ${p}% 是多少？`,ans,[base*p/10,ans+base/10,ans-base/10,base-p],
+    `把百分数化成小数：${p}% = ${p/100}。求一个数的百分之几用乘法：${base} × ${p/100} = ${ans}。`); }
+function g6Fraction(d){ const dens=d===1?[2,3,4,6]:[3,4,5,6,8,9,12]; let d1,d2,n1,n2,g=0;
+  do{ d1=pick(dens); d2=pick(dens); n1=ri(1,d1-1); n2=ri(1,d2-1);}while(g++<20&&n1/d1===n2/d2);
+  const num=n1*d2+n2*d1, den=d1*d2, ans=fracStr(num,den);
+  return buildQ(`计算：${n1}/${d1} + ${n2}/${d2} = ？`,ans,[fracStr(n1+n2,d1+d2),fracStr(n1+n2,d1),fracStr(num+1,den)],
+    `先通分：${n1}/${d1} = ${n1*d2}/${den}，${n2}/${d2} = ${n2*d1}/${den}；相加得 ${num}/${den}，约分后为 ${ans}。`); }
+function g6Ratio(d){ const a=ri(2,9),b=ri(2,9),k=ri(2,d===1?4:8),c=a*k,ans=b*k;
+  return buildQ(`已知 ${a} : ${b} = ${c} : x，求 x 的值。`,ans,[b*k+1,a*k,b+a,b*k-1],
+    `比例的基本性质：外项之积 = 内项之积，即 ${a} × x = ${b} × ${c}，所以 x = ${b}×${c} ÷ ${a} = ${ans}。`); }
+function g6Circle(d){ const r=ri(2,d===1?6:10),PI=3.14;
+  if(Math.random()<0.5){ const ans=(PI*r*r).toFixed(2);
+    return buildQ(`一个圆的半径是 ${r} cm，它的面积是多少平方厘米？（π 取 3.14）`,ans,[(PI*2*r).toFixed(2),(PI*r).toFixed(2),(PI*r*r/2).toFixed(2)],
+      `圆的面积公式 S = πr²。代入 r = ${r}：S = 3.14 × ${r*r} = ${ans}（平方厘米）。`); }
+  const ans=(2*PI*r).toFixed(2);
+  return buildQ(`一个圆的半径是 ${r} cm，它的周长是多少厘米？（π 取 3.14）`,ans,[(PI*r*r).toFixed(2),(PI*r).toFixed(2),(PI*2*r*r).toFixed(2)],
+    `圆的周长公式 C = 2πr。代入 r = ${r}：C = 2 × 3.14 × ${r} = ${ans}（厘米）。`); }
+function g7Equation(d){ const a=ri(2,d===1?5:9),c=ri(1,a-1),x=ri(1,d===1?9:15),b=ri(1,9),rhs=(a-c)*x+b;
+  return buildQ(`解方程：${a}x + ${b} = ${c}x + ${rhs}，则 x = ？`,x,[x+1,-x,x-1,a-c],
+    `移项：${a}x − ${c}x = ${rhs} − ${b}，即 ${a-c}x = ${rhs-b}，所以 x = ${rhs-b} ÷ ${a-c} = ${x}。`); }
+function g7Integer(d){ const a=ri(2,d===1?9:20),b=ri(2,20),c=ri(2,20),ans=-a+b+c;
+  return buildQ(`计算：(-${a}) + ${b} - (-${c}) = ？`,ans,[ans-2*c,ans+2,ans-1,-a-b-c],
+    `减去一个负数等于加上它的相反数：-${a} + ${b} + ${c} = ${ans}。`); }
+function g7Poly(d){ const a=ri(2,9),b=ri(3,9),c=ri(2,9),e=ri(1,b-1),X=a+c,Y=b-e;
+  return buildQ(`化简：${a}x + ${b}y + ${c}x - ${e}y = ？`,`${X}x + ${Y}y`,[`${X}x - ${Y}y`,`${a+c+1}x + ${Y}y`,`${X+1}x + ${Y+1}y`],
+    `合并同类项：x 项 ${a}x + ${c}x = ${X}x；y 项 ${b}y − ${e}y = ${Y}y。所以结果是 ${X}x + ${Y}y。`); }
+function g7Angle(d){ const x=ri(10,80);
+  if(Math.random()<0.5){ const ans=90-x;
+    return buildQ(`一个角的度数是 ${x}°，它的余角是多少度？`,`${ans}°`,[`${180-x}°`,`${x}°`,`${90+x}°`],
+      `两个角的和是 90° 时互为余角，所以余角 = 90° − ${x}° = ${ans}°。`); }
+  const ans=180-x;
+  return buildQ(`一个角的度数是 ${x}°，它的补角是多少度？`,`${ans}°`,[`${90-x}°`,`${x}°`,`${180+x}°`],
+    `两个角的和是 180° 时互为补角，所以补角 = 180° − ${x}° = ${ans}°。`); }
+function g8Sqrt(d){ const m=pick([2,3,5,6,7]),k=ri(2,d===1?3:6),n=k*k*m;
+  return buildQ(`化简：√${n} = ？`,`${k}√${m}`,[`${k*2}√${m}`,`√${k*m}`,`${k}√${m*2}`],
+    `${n} = ${k}² × ${m}，所以 √${n} = ${k}√${m}。`); }
+function g8Quadratic(d){ let r1=ri(1,d===1?6:9),r2=ri(1,d===1?6:9); if(r1===r2)r2=r1+1;
+  const b=r1+r2,c=r1*r2;
+  return buildQ(`解方程：x² − ${b}x + ${c} = 0，它的两个根是？`,`x₁ = ${r1}，x₂ = ${r2}`,[`x₁ = ${-r1}，x₂ = ${-r2}`,`x₁ = ${r1}，x₂ = ${-r2}`,`x₁ = ${r1+1}，x₂ = ${r2+1}`],
+    `因式分解：x² − ${b}x + ${c} = (x − ${r1})(x − ${r2}) = 0，所以 x₁ = ${r1}，x₂ = ${r2}。`); }
+function g8Pythagoras(d){ const t=pick([[3,4,5],[6,8,10],[5,12,13],[8,15,17],[7,24,25],[9,12,15],[20,21,29]]);
+  if(Math.random()<0.6)
+    return buildQ(`直角三角形的两条直角边分别是 ${t[0]} cm 和 ${t[1]} cm，斜边长是多少厘米？`,`${t[2]}`,[String(t[0]+t[1]),String(t[2]+1),String(t[2]-1)],
+      `由勾股定理：c² = ${t[0]}² + ${t[1]}² = ${t[2]}²，所以 c = ${t[2]} cm。`);
+  return buildQ(`直角三角形的斜边是 ${t[2]} cm，一条直角边是 ${t[0]} cm，另一条直角边是多少厘米？`,`${t[1]}`,[String(t[2]+t[0]),String(t[2]-t[0]),String(t[1]+1)],
+    `由勾股定理：b² = ${t[2]}² − ${t[0]}² = ${t[1]}²，所以 b = ${t[1]} cm。`); }
+function g8Inverse(d){ const x0=ri(1,6),y0=ri(1,6),k=x0*y0;
+  return buildQ(`已知反比例函数 y = k/x 的图像经过点 (${x0}, ${y0})，求 k 的值。`,`${k}`,[`${-k}`,`${k+1}`,`${x0+y0}`],
+    `把点代入 y = k/x，得 ${y0} = k ÷ ${x0}，所以 k = ${x0} × ${y0} = ${k}。`); }
+function g9Parabola(d){ const h=ri(1,5)*pick([1,-1]),k=ri(-4,6),b=-2*h,c=h*h+k;
+  const bStr=b===0?'':(b>0?`+ ${b}x`:`− ${-b}x`),cStr=c===0?'':(c>0?`+ ${c}`:`− ${-c}`);
+  return buildQ(`抛物线 y = x² ${bStr} ${cStr} 的顶点坐标是？`,`(${h}, ${k})`,[`(${-h}, ${k})`,`(${h}, ${-k})`,`(${h+1}, ${k})`],
+    `配方：y = (x − ${h})² ${k>=0?'+ '+k:'− '+(-k)}，所以顶点坐标是 (${h}, ${k})。`); }
+function g9Trig(d){ const items=[['sin 30°','1/2'],['cos 60°','1/2'],['tan 45°','1'],['sin 45°','√2/2'],['cos 45°','√2/2'],['tan 60°','√3'],['sin 60°','√3/2'],['cos 30°','√3/2'],['tan 30°','√3/3']];
+  const [expr,ans]=pick(items);
+  return buildQ(`计算：${expr} = ？`,ans,['1/2','√2/2','√3/2','1','√3','√3/3'].filter(v=>v!==ans),
+    `特殊角的三角比：${expr} = ${ans}。建议熟记 30°、45°、60° 的值。`); }
+function g9Similar(d){ const a=ri(1,5),b=ri(2,6);
+  return buildQ(`两个相似三角形的相似比是 ${a} : ${b}，它们的面积比是多少？`,`${a*a} : ${b*b}`,[`${a} : ${b}`,`${b*b} : ${a*a}`,`${a*2} : ${b*2}`],
+    `相似三角形的面积比等于相似比的平方，即 ${a}² : ${b}² = ${a*a} : ${b*b}。`); }
+function g9Sector(d){ const r=ri(3,10),n=pick([30,60,90,120,180,270]),PI=3.14;
+  if(Math.random()<0.5){ const ans=(n/360*2*PI*r).toFixed(2);
+    return buildQ(`半径为 ${r} cm 的圆中，圆心角为 ${n}° 的弧长是多少厘米？（π 取 3.14）`,ans,[(n/360*PI*r*r).toFixed(2),(PI*r).toFixed(2),(n/180*PI*r).toFixed(2)],
+      `弧长公式 l = nπr / 180 = ${n} × 3.14 × ${r} ÷ 180 = ${ans}（厘米）。`); }
+  const ans=(n/360*PI*r*r).toFixed(2);
+  return buildQ(`半径为 ${r} cm 的圆中，圆心角为 ${n}° 的扇形面积是多少平方厘米？（π 取 3.14）`,ans,[(n/360*2*PI*r).toFixed(2),(PI*r*r).toFixed(2),(n/180*PI*r*r).toFixed(2)],
+    `扇形面积公式 S = nπr² / 360 = ${n} × 3.14 × ${r*r} ÷ 360 = ${ans}（平方厘米）。`); }
+
+const GENERATORS = {
+  '六年级':[g6Percent,g6Fraction,g6Ratio,g6Circle],
+  '七年级':[g7Equation,g7Integer,g7Poly,g7Angle],
+  '八年级':[g8Sqrt,g8Quadratic,g8Pythagoras,g8Inverse],
+  '九年级':[g9Parabola,g9Trig,g9Similar,g9Sector]
+};
+function generateLocal(grade, difficulty, count){
+  const d = difficulty==='基础'?1:(difficulty==='提高'?3:2);
+  const list = GENERATORS[grade] || GENERATORS['八年级'];
+  const out=[], seen=new Set(); let guard=0;
+  while(out.length<count && guard++<600){
+    let q=null; try{ q=pick(list)(d); }catch(e){}
+    if(!q||!q.stem||seen.has(q.stem)) continue;
+    seen.add(q.stem); out.push(q);
+  }
+  return out;
+}
+
+/* =========================================================
+   4. AI 出题（走代理，失败回退本地）
+   ========================================================= */
+async function generateQuestions(grade, difficulty, topics, count){
+  if(!CONFIG.AI_PROXY_URL) return generateLocal(grade, difficulty, count);
+  try{
+    const res = await fetch(CONFIG.AI_PROXY_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ grade, difficulty, topics, count })
+    });
+    if(!res.ok) throw new Error('proxy '+res.status);
+    const data = await res.json();
+    const arr = Array.isArray(data) ? data : (data.questions || []);
+    const valid = arr.filter(q =>
+      q && typeof q.stem === 'string' && q.stem.trim() &&
+      Array.isArray(q.options) && q.options.length === 4 &&
+      Number.isInteger(q.answer) && q.answer >= 0 && q.answer < 4 &&
+      typeof q.explain === 'string'
+    ).map(q => ({
+      stem: q.stem.trim(),
+      options: q.options.map(String),
+      answer: q.answer,
+      explain: q.explain.trim()
+    }));
+    if(valid.length < count){
+      const need = count - valid.length;
+      const extra = generateLocal(grade, difficulty, need);
+      return valid.concat(extra).slice(0, count);
+    }
+    return valid.slice(0, count);
+  }catch(e){
+    console.warn('AI 出题失败，回退本地引擎：', e);
+    return generateLocal(grade, difficulty, count);
+  }
+}
+
+/* =========================================================
+   5. 数据层：统一 Store（本地 / 云端）
+   ========================================================= */
+let DB = {
+  users: {},                 // 本地模式用户表；云端模式下作为缓存
+  currentAccount: null,
+  currentUserId: null,       // 云端模式下的 users.id
+  guest: { history: [], difficulty:'中等', grade:'八年级' },
+  seeded: false,
+  othersCache: null          // 云端模式下“其他学生”聚合结果
+};
+function save(){
+  try{
+    localStorage.setItem(KEY, JSON.stringify({
+      users: DB.users, currentAccount: DB.currentAccount,
+      currentUserId: DB.currentUserId, guest: DB.guest,
+      seeded: DB.seeded, othersCache: DB.othersCache
+    }));
+  }catch(e){}
+}
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(!raw) return;
+    const p = JSON.parse(raw);
+    DB.users = p.users || {};
+    DB.currentAccount = p.currentAccount || null;
+    DB.currentUserId = p.currentUserId || null;
+    DB.guest = Object.assign({ history:[], difficulty:'中等', grade:'八年级' }, p.guest||{});
+    DB.seeded = !!p.seeded;
+    DB.othersCache = p.othersCache || null;
+  }catch(e){}
+}
+
+/* ---------- Supabase REST 封装 ---------- */
+const sb = {
+  h(extra){
+    return Object.assign({
+      'apikey': CONFIG.SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + CONFIG.SUPABASE_ANON_KEY,
+      'Content-Type': 'application/json'
+    }, extra||{});
+  },
+  url(path){ return CONFIG.SUPABASE_URL.replace(/\/$/,'') + '/rest/v1/' + path; },
+  async post(table, body){
+    const r = await fetch(this.url(table), {
+      method:'POST', headers:this.h({'Prefer':'return=representation'}), body:JSON.stringify(body)
+    });
+    if(!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
+  async patch(table, query, body){
+    const r = await fetch(this.url(table)+'?'+query, {
+      method:'PATCH', headers:this.h({'Prefer':'return=representation'}), body:JSON.stringify(body)
+    });
+    if(!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
+  async get(table, query){
+    const r = await fetch(this.url(table)+'?'+query, { headers:this.h() });
+    if(!r.ok) throw new Error(await r.text());
+    return r.json();
+  }
+};
+
+/* ---------- 账号 API ---------- */
+const api = {
+  async register({account, password, school, name, grade, className, email, extra}){
+    if(!isCloud()){
+      if(DB.users[account]) throw new Error('账号已存在');
+      DB.users[account] = {
+        account, passwordHash: await sha256(password),
+        school, name, grade, className, email, extra,
+        difficulty:'中等', history:[]
+      };
+      DB.currentAccount = account;
+      save();
+      return DB.users[account];
+    }
+    // 云端
+    const exists = await sb.get('users', `account=eq.${encodeURIComponent(account)}&select=id`);
+    if(exists.length) throw new Error('账号已存在');
+    const rows = await sb.post('users', {
+      account, password_hash: await sha256(password),
+      school, name, grade, class_name: className, email, extra, difficulty:'中等'
+    });
+    const u = rows[0];
+    DB.currentAccount = account;
+    DB.currentUserId = u.id;
+    save();
+    return u;
+  },
+
+  async login(account, password){
+    if(!isCloud()){
+      const u = DB.users[account] || Object.values(DB.users).find(x=>x.name===account);
+      if(!u) throw new Error('账号或密码不正确');
+      if(u.passwordHash !== await sha256(password)) throw new Error('账号或密码不正确');
+      DB.currentAccount = u.account;
+      save();
+      return u;
+    }
+    // 云端
+    const rows = await sb.get('users',
+      `or=(account.eq.${encodeURIComponent(account)},name.eq.${encodeURIComponent(account)})&select=*`);
+    if(!rows.length) throw new Error('账号或密码不正确');
+    const u = rows[0];
+    if(u.password_hash !== await sha256(password)) throw new Error('账号或密码不正确');
+    DB.currentAccount = u.account;
+    DB.currentUserId = u.id;
+    // 拉取自己的历史
+    const recs = await sb.get('exam_records',
+      `user_id=eq.${u.id}&select=*&order=created_at.desc`);
+    u.history = recs.map(r => ({
+      ts: new Date(r.created_at).getTime(),
+      grade: r.grade, difficulty: r.difficulty,
+      total: r.total, correct: r.correct,
+      questions: r.questions || [], answers: r.answers || []
+    }));
+    DB.users[u.account] = {
+      account: u.account, school: u.school, name: u.name,
+      grade: u.grade, className: u.class_name, email: u.email, extra: u.extra,
+      difficulty: u.difficulty, history: u.history
+    };
+    save();
+    return DB.users[u.account];
+  },
+
+  async updateMe(patch){
+    const u = DB.users[DB.currentAccount];
+    if(!u) return;
+    if(patch.password) patch.passwordHash = await sha256(patch.password);
+    Object.assign(u, patch);
+    delete u.password;
+    if(isCloud() && DB.currentUserId){
+      const body = {
+        school: u.school, name: u.name, grade: u.grade,
+        class_name: u.className, email: u.email, extra: u.extra
+      };
+      if(patch.password) body.password_hash = patch.passwordHash;
+      await sb.patch('users', `id=eq.${DB.currentUserId}`, body);
+    }
+    save();
+  },
+
+  async pushRecord(rec){
+    const u = DB.users[DB.currentAccount];
+    if(u) u.history.push(rec); else DB.guest.history.push(rec);
+    save();
+    if(isCloud() && DB.currentUserId){
+      try{
+        await sb.post('exam_records', {
+          user_id: DB.currentUserId,
+          grade: rec.grade, difficulty: rec.difficulty,
+          total: rec.total, correct: rec.correct,
+          questions: rec.questions, answers: rec.answers
+        });
+      }catch(e){ console.warn('成绩同步失败：', e); }
+    }
+  },
+
+  async fetchStudents(){
+    if(!isCloud()) return null;
+    const me = DB.currentUserId;
+    const users = await sb.get('users',
+      `id=neq.${me}&select=id,name,grade,class_name,school`);
+    const recs = await sb.get('exam_records',
+      `select=user_id,total,correct,created_at,difficulty&order=created_at.desc`);
+    const byUser = {};
+    recs.forEach(r => { (byUser[r.user_id] = byUser[r.user_id] || []).push(r); });
+    return users.map(u => {
+      const h = (byUser[u.id]||[]).map(r => ({
+        ts: new Date(r.created_at).getTime(),
+        total: r.total, correct: r.correct, difficulty: r.difficulty
+      }));
+      return { name: u.name, grade: u.grade, className: u.class_name, school: u.school, history: h };
+    });
+  }
+};
+
+/* ---------- 会话辅助 ---------- */
+function currentUser(){ return DB.currentAccount ? DB.users[DB.currentAccount] : null; }
+function historyOf(){ const u = currentUser(); return u ? (u.history||[]) : DB.guest.history; }
+function difficultyOf(){ const u = currentUser(); return u ? u.difficulty : DB.guest.difficulty; }
+function gradeOf(){ const u = currentUser(); return u ? u.grade : DB.guest.grade; }
+function schoolOf(){ const u = currentUser(); return u ? u.school : SCHOOL_DEFAULT; }
+
+/* =========================================================
+   6. 种子数据（仅本地模式）
+   ========================================================= */
+function seedData(){
+  if(DB.seeded || isCloud()) return;
+  DB.seeded = true;
+  // 演示账号密码统一 123456，注册后建议改密
+  const demo = [
+    {account:'zhangmingyuan', name:'张明远', grade:'八年级', className:'2班'},
+    {account:'lisitong',      name:'李思彤', grade:'八年级', className:'1班'},
+    {account:'wanghaoran',    name:'王浩然', grade:'九年级', className:'3班'},
+    {account:'chenyuxuan',    name:'陈雨萱', grade:'六年级', className:'4班'}
+  ];
+  (async ()=>{
+    for(const d of demo){
+      const hist = []; const n = ri(2,4);
+      for(let i=0;i<n;i++){
+        hist.push({ ts: Date.now()-(n-i)*ri(1,7)*86400000, grade:d.grade,
+          difficulty:pick(DIFFS), total:QCOUNT, correct:ri(4,10), questions:[], answers:[] });
+      }
+      DB.users[d.account] = {
+        account:d.account, passwordHash: await sha256('123456'),
+        school:SCHOOL_DEFAULT, name:d.name, grade:d.grade,
+        className:d.className, email:'', extra:'',
+        difficulty:'中等', history: hist
+      };
+    }
+    save(); renderSideUser();
+  })();
+}
+
+/* =========================================================
+   7. 状态与渲染
+   ========================================================= */
+const state = {
+  panel:'data', view:'normal',
+  currentTest:null, lastRecord:null, reviewRecord:null,
+  generating:false, loadingOthers:false
+};
+
+function render(){
+  renderNav(); renderSideUser();
+  const main = document.getElementById('main');
+  if(state.view==='test') main.innerHTML = viewTest();
+  else if(state.view==='result') main.innerHTML = viewResult();
+  else if(state.view==='review') main.innerHTML = viewReview();
+  else main.innerHTML = viewPanel(state.panel);
+}
+
+function renderNav(){
+  const items = [['data','测试数据'],['content','测试内容'],['difficulty','测试难度'],['others','其他学生']];
+  document.getElementById('nav').innerHTML = items.map(([k,label])=>
+    `<button data-action="nav" data-panel="${k}" class="${state.panel===k&&state.view==='normal'?'active':''}">${label}</button>`
+  ).join('');
+}
+
+function renderSideUser(){
+  const el = document.getElementById('sideUser');
+  const u = currentUser();
+  const mode = isCloud()
+    ? `<span class="mode-tag mode-cloud">云端同步</span>`
+    : `<span class="mode-tag mode-local">本地模式</span>`;
+  if(u){
+    el.innerHTML = `
+      <div class="u-name">${esc(u.name)}</div>
+      <div class="u-meta">账号：${esc(u.account)}<br>${esc(u.school)}<br>${esc(u.grade)} ${esc(u.className)}</div>
+      <div class="u-actions">
+        <button class="btn ghost small" data-action="edit-profile">修改信息</button>
+        <button class="btn ghost small" data-action="logout">退出</button>
+      </div>
+      ${mode}
+      <div class="u-actions"><button class="link" data-action="settings-open" style="padding:0;margin-top:8px">云端设置</button></div>`;
+  }else{
+    el.innerHTML = `
+      <div class="u-name">未登录（游客）</div>
+      <div class="u-meta">当前为可选登录模式<br>登录后可查看「其他学生」</div>
+      <div class="u-actions">
+        <button class="btn small" data-action="login-open">登录</button>
+        <button class="btn ghost small" data-action="register-open">注册</button>
+      </div>
+      ${mode}
+      <div class="u-actions"><button class="link" data-action="settings-open" style="padding:0;margin-top:8px">云端设置</button></div>`;
+  }
+}
+
+function viewPanel(p){
+  if(p==='data') return panelData();
+  if(p==='content') return panelContent();
+  if(p==='difficulty') return panelDifficulty();
+  if(p==='others') return panelOthers();
+  return '';
+}
+
+function panelData(){
+  const all = historyOf();
+  const h = all.slice().sort((a,b)=>b.ts-a.ts);
+  const n = h.length;
+  const avgScore = n ? Math.round(h.reduce((s,x)=>s+x.correct/x.total*100,0)/n) : 0;
+  const avgAcc = n ? (h.reduce((s,x)=>s+x.correct/x.total*100,0)/n).toFixed(1) : '0.0';
+  const best = n ? Math.max(...h.map(x=>Math.round(x.correct/x.total*100))) : 0;
+  let rows = '';
+  if(!n){
+    rows = `<tr><td colspan="6"><div class="empty"><b>还没有测试记录</b>去「测试内容」面板开始你的第一次测试吧</div></td></tr>`;
+  }else{
+    rows = h.map(r=>{
+      const pct = Math.round(r.correct/r.total*100);
+      const canReview = r.questions && r.questions.length;
+      return `<tr>
+        <td>${fmtDate(r.ts)}</td>
+        <td>${esc(r.grade)}</td>
+        <td>${esc(r.difficulty)}</td>
+        <td><b style="color:${pct>=80?'var(--ok)':pct>=60?'var(--warn)':'var(--bad)'}">${pct}</b></td>
+        <td>${(r.correct/r.total*100).toFixed(1)}%</td>
+        <td>${canReview?`<button class="btn ghost small" data-action="review" data-ts="${r.ts}">复盘</button>`:`<span style="color:#a9b8ca;font-size:12.5px">—</span>`}</td>
+      </tr>`;
+    }).join('');
+  }
+  return `
+    <div class="panel-title">测试数据</div>
+    <div class="panel-desc">这里记录你历次测试的分数与正确率，点击「复盘」可以查看错题讲解。</div>
+    <div class="stats">
+      <div class="stat"><div class="v">${n}</div><div class="l">测试次数</div></div>
+      <div class="stat"><div class="v">${n?avgScore:'—'}</div><div class="l">平均分（百分制）</div></div>
+      <div class="stat"><div class="v">${n?avgAcc+'%':'—'}</div><div class="l">平均正确率</div></div>
+      <div class="stat"><div class="v">${n?best:'—'}</div><div class="l">最高分</div></div>
+    </div>
+    <div class="card">
+      <h3>历次记录</h3>
+      <table>
+        <thead><tr><th>日期</th><th>年级</th><th>难度</th><th>得分</th><th>正确率</th><th>操作</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+function panelContent(){
+  const u = currentUser();
+  const grade = gradeOf();
+  const topics = CURRICULUM[grade] || CURRICULUM['八年级'];
+  const diff = difficultyOf();
+  const gradePicker = u ? '' : `
+    <div class="card">
+      <h3>选择你的年级（游客模式）</h3>
+      <select id="guestGrade" style="padding:10px 13px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;background:#fbfdff;color:var(--ink)">
+        ${GRADES.map(g=>`<option ${g===grade?'selected':''}>${g}</option>`).join('')}
+      </select>
+    </div>`;
+  const aiHint = CONFIG.AI_PROXY_URL
+    ? `<div class="hint">已连接 AI 出题服务，将根据年级、难度和知识点动态生成题目。</div>`
+    : `<div class="hint">当前使用本地出题引擎。如需 AI 动态出题，请在「云端设置」中填写 AI 代理地址。</div>`;
+  return `
+    <div class="panel-title">测试内容</div>
+    <div class="panel-desc">系统根据你的学校与年级，自动匹配教学进度并生成下一次测试的内容。</div>
+    ${aiHint}
+    ${gradePicker}
+    <div class="card">
+      <h3>下一次测试内容</h3>
+      <div style="font-size:14px;line-height:2.1">
+        <div><span style="color:var(--ink-2)">学校：</span><b>${esc(schoolOf())}</b></div>
+        <div><span style="color:var(--ink-2)">年级：</span><b>${esc(grade)}</b></div>
+        <div><span style="color:var(--ink-2)">学科：</span><b>数学</b></div>
+        <div><span style="color:var(--ink-2)">考试难度：</span><b style="color:var(--blue-d)">${esc(diff)}</b></div>
+        <div><span style="color:var(--ink-2)">题量：</span><b>${QCOUNT} 题（选择题）</b></div>
+        <div style="margin-top:10px;color:var(--ink-2)">覆盖知识点：</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+          ${topics.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="test-bar">
+      <button class="btn" data-action="start-test" ${state.generating?'disabled':''}>
+        ${state.generating?'正在生成题目…':'开始测试'}
+      </button>
+      <button class="btn ghost" data-action="nav" data-panel="difficulty">调整难度</button>
+    </div>`;
+}
+
+function panelDifficulty(){
+  const cur = difficultyOf();
+  const desc = {
+    '基础':'紧扣课本基础题，以概念辨析和直接计算为主，适合刚学完新课后的巩固练习。',
+    '中等':'对标常规章节测验，兼顾基础与综合，需要两步以上的推理与计算。',
+    '提高':'对标期中期末压轴题，含多知识点综合与易错陷阱，适合冲刺高分。'
+  };
+  return `
+    <div class="panel-title">测试难度</div>
+    <div class="panel-desc">选择本次测试的难度，出题引擎会据此调整题目类型与计算复杂度。</div>
+    <div class="card" style="margin-bottom:18px">
+      <h3>本次考试难度：<span style="color:var(--blue)">${esc(cur)}</span></h3>
+      <div style="font-size:13px;color:var(--ink-2);line-height:1.8">${desc[cur]}</div>
+    </div>
+    <div class="diff-grid">
+      ${DIFFS.map(d=>`
+        <div class="diff-card ${d===cur?'active':''}" data-action="set-difficulty" data-d="${d}">
+          ${d===cur?'<span class="badge">当前</span>':''}
+          <div class="dname">${d}</div>
+          <div class="ddesc">${desc[d]}</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function panelOthers(){
+  const u = currentUser();
+  if(!u){
+    return `
+      <div class="panel-title">其他学生</div>
+      <div class="panel-desc">该面板需要登录后才能查看。</div>
+      <div class="card lock">
+        <div class="lock-icon">🔒</div>
+        <div style="font-size:15px;font-weight:600;margin-bottom:6px">此面板仅对已登录学生开放</div>
+        <div style="font-size:13px;color:var(--ink-2)">登录后即可看到其他同学的考试面板与成绩概况</div>
+        <div class="modal-actions">
+          <button class="btn" data-action="login-open">立即登录</button>
+          <button class="btn ghost" data-action="register-open">注册账号</button>
+        </div>
+      </div>`;
+  }
+  if(isCloud() && !DB.othersCache){
+    return `<div class="panel-title">其他学生</div>
+      <div class="loading"><div class="spinner"></div>正在加载其他学生的数据…</div>`;
+  }
+  let others;
+  if(isCloud()){
+    others = (DB.othersCache||[]).slice();
+  }else{
+    others = Object.values(DB.users).filter(x=>x.account!==u.account);
+  }
+  let body;
+  if(!others.length){
+    body = `<div class="card"><div class="empty"><b>暂时还没有其他同学</b>邀请同学注册后即可在这里看到他们的考试面板</div></div>`;
+  }else{
+    body = `<div class="stu-grid">${others.map(o=>{
+      const h = (o.history||[]).slice().sort((a,b)=>b.ts-a.ts);
+      const cnt = h.length;
+      const avg = cnt ? Math.round(h.reduce((s,x)=>s+x.correct/x.total*100,0)/cnt) : 0;
+      const last = cnt ? Math.round(h[0].correct/h[0].total*100) : 0;
+      const recent = h.slice(0,3).map(r=>`${fmtDate(r.ts)} · ${esc(r.difficulty)} · ${Math.round(r.correct/r.total*100)}分`).join('<br>');
+      return `<div class="stu-card">
+        <div class="stu-head">
+          <div class="avatar">${esc((o.name||'?').slice(0,1))}</div>
+          <div>
+            <div class="stu-name">${esc(o.name)}</div>
+            <div class="stu-meta">${esc(o.grade)} ${esc(o.className||'')} · ${esc(o.school)}</div>
+          </div>
+        </div>
+        <div class="stu-stats">
+          <span class="chip">测试 ${cnt} 次</span>
+          <span class="chip">平均 ${cnt?avg+'分':'—'}</span>
+          <span class="chip">最近 ${cnt?last+'分':'—'}</span>
+        </div>
+        <div class="stu-hist">${recent||'暂无测试记录'}</div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+  return `
+    <div class="panel-title">其他学生</div>
+    <div class="panel-desc">以下是其他已登录同学的考试面板概览。</div>
+    ${body}`;
+}
+
+function viewTest(){
+  const t = state.currentTest;
+  let html = `
+    <div class="panel-title">${esc(t.grade)} · 数学测试</div>
+    <div class="panel-desc">难度：<b style="color:var(--blue-d)">${esc(t.difficulty)}</b> · 共 ${t.questions.length} 题 · 每题 ${(100/t.questions.length).toFixed(1)} 分</div>
+    <div class="card">`;
+  t.questions.forEach((q,i)=>{
+    const saved = t.answers[i];
+    html += `<div class="q">
+      <div class="q-stem"><span class="q-no">${i+1}</span><span>${esc(q.stem)}</span></div>
+      <div class="q-opts">`;
+    q.options.forEach((o,j)=>{
+      html += `<label class="opt"><input type="radio" name="q${i}" value="${j}" ${saved===j?'checked':''}><span>${esc(o)}</span></label>`;
+    });
+    html += `</div></div>`;
+  });
+  html += `</div>
+    <div class="test-bar">
+      <button class="btn" data-action="submit-test">提交试卷</button>
+      <button class="btn ghost" data-action="cancel-test">放弃本次测试</button>
+    </div>`;
+  return html;
+}
+
+function viewResult(){
+  const r = state.lastRecord;
+  const pct = Math.round(r.correct/r.total*100);
+  const wrong = r.total - r.correct;
+  return `
+    <div class="panel-title">测试结果</div>
+    <div class="panel-desc">${fmtDate(r.ts)} · ${esc(r.grade)} · 难度 ${esc(r.difficulty)}</div>
+    <div class="card">
+      <div class="result-head">
+        <div class="score-ring" style="--p:${pct}"><b>${pct}</b></div>
+        <div class="result-info">
+          <div class="big">${pct>=90?'太棒了，继续保持！':pct>=75?'不错，还有提升空间':pct>=60?'基础尚可，需加强练习':'需要加油，重点复习错题'}</div>
+          <div class="sub">答对 <b>${r.correct}</b> / ${r.total} 题　答错 <b style="color:var(--bad)">${wrong}</b> 题<br>
+          正确率：<b>${(r.correct/r.total*100).toFixed(1)}%</b>　难度：${esc(r.difficulty)}</div>
+        </div>
+      </div>
+    </div>
+    <div class="test-bar">
+      <button class="btn" data-action="review-last">复盘本次测试（含错题讲解）</button>
+      <button class="btn ghost" data-action="back-home">返回面板</button>
+    </div>`;
+}
+
+function viewReview(){
+  const r = state.reviewRecord;
+  if(!r || !r.questions || !r.questions.length){
+    return `<div class="panel-title">复盘</div>
+      <div class="card"><div class="empty"><b>该记录没有可复盘的题目</b>这是一条示例数据，请完成一次新的测试后再来复盘</div></div>
+      <div class="test-bar"><button class="btn ghost" data-action="back-home">返回面板</button></div>`;
+  }
+  const pct = Math.round(r.correct/r.total*100);
+  let html = `
+    <div class="panel-title">测试复盘</div>
+    <div class="panel-desc">${fmtDate(r.ts)} · ${esc(r.grade)} · 难度 ${esc(r.difficulty)} · 得分 ${pct} · 答对 ${r.correct}/${r.total}</div>
+    <div class="card">`;
+  r.questions.forEach((q,i)=>{
+    const mine = r.answers[i];
+    const isRight = mine === q.answer;
+    html += `<div class="q">
+      <div class="q-stem">
+        <span class="q-no" style="${isRight?'background:#eefaf4;color:var(--ok)':'background:#fdf0ef;color:var(--bad)'}">${i+1}</span>
+        <span>${esc(q.stem)}<span style="font-size:12px;color:${isRight?'var(--ok)':'var(--bad)'};margin-left:6px">${isRight?'✔ 正确':'✘ 错误'}</span></span>
+      </div>
+      <div class="q-opts">`;
+    q.options.forEach((o,j)=>{
+      let cls='opt', mark='';
+      if(j===q.answer){ cls+=' correct'; mark='　✓ 正确答案'; }
+      else if(j===mine){ cls+=' wrong'; mark='　✗ 你的选择'; }
+      html += `<div class="${cls}"><input type="radio" disabled ${j===mine?'checked':''}><span>${esc(o)}${mark}</span></div>`;
+    });
+    html += `</div>
+      <div style="margin:12px 0 0 34px;background:var(--blue-l);border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.8">
+        <b style="color:var(--blue-d)">讲解：</b>${esc(q.explain)}
+      </div>
+    </div>`;
+  });
+  html += `</div><div class="test-bar"><button class="btn ghost" data-action="back-home">返回面板</button></div>`;
+  return html;
+}
+
+/* =========================================================
+   8. 行为
+   ========================================================= */
+async function startTest(){
+  if(state.generating) return;
+  state.generating = true;
+  render();
+  const grade = gradeOf();
+  const diff = difficultyOf();
+  const topics = CURRICULUM[grade] || CURRICULUM['八年级'];
+  const qs = await generateQuestions(grade, diff, topics, QCOUNT);
+  state.generating = false;
+  if(!qs.length){ alert('出题失败，请稍后重试'); render(); return; }
+  state.currentTest = { grade, difficulty:diff, questions:qs, answers:new Array(qs.length).fill(null) };
+  state.view = 'test';
+  render();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+async function submitTest(){
+  const t = state.currentTest;
+  if(!t) return;
+  const unanswered = t.answers.filter(a=>a===null).length;
+  if(unanswered > 0 && !confirm(`还有 ${unanswered} 题未作答，确定提交吗？`)) return;
+  let correct = 0;
+  t.questions.forEach((q,i)=>{ if(t.answers[i]===q.answer) correct++; });
+  const rec = {
+    ts: Date.now(), grade:t.grade, difficulty:t.difficulty,
+    total:t.questions.length, correct,
+    questions:t.questions, answers:t.answers.slice()
+  };
+  state.lastRecord = rec;
+  state.view = 'result';
+  render();
+  window.scrollTo({top:0, behavior:'smooth'});
+  await api.pushRecord(rec);
+}
+
+function setDifficulty(d){
+  if(!DIFFS.includes(d)) return;
+  const u = currentUser();
+  if(u) u.difficulty = d; else DB.guest.difficulty = d;
+  save();
+  if(isCloud() && u){
+    // 云端同步难度，失败也不阻塞 UI
+    api.updateMe({}).catch(()=>{});
+  }
+  render();
+}
+
+function findRecordByTs(ts){
+  const list = historyOf();
+  for(let i=0;i<list.length;i++){ if(String(list[i].ts)===String(ts)) return list[i]; }
+  return null;
+}
+
+/* =========================================================
+   9. 弹窗
+   ========================================================= */
+function openModal(html){
+  closeModal();
+  const mask = document.createElement('div');
+  mask.className = 'mask'; mask.id = 'mask';
+  mask.innerHTML = `<div class="modal">${html}</div>`;
+  mask.addEventListener('mousedown', e=>{ if(e.target===mask) closeModal(); });
+  document.body.appendChild(mask);
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(){
+  const m = document.getElementById('mask');
+  if(m) m.remove();
+  document.body.style.overflow = '';
+}
+
+function openLogin(){
+  openModal(`
+    <div class="modal-head">
+      <div><div class="modal-title">登录</div>
+      <div class="modal-sub">登录后可以查看「其他学生」面板并同步测试数据</div></div>
+      <button class="x" data-close>&times;</button>
+    </div>
+    <div class="modal-body">
+      ${isCloud()?'':'<div class="hint">当前为本地模式，账号仅保存在本浏览器。如需多设备同步，请先在「云端设置」中配置 Supabase。</div>'}
+      <label class="field"><span>账号</span><input id="li-acc" type="text" placeholder="请输入账号或姓名" autocomplete="username"></label>
+      <label class="field"><span>密码</span>
+        <div class="pw"><input id="li-pw" type="password" placeholder="请输入密码" autocomplete="current-password">
+        <button type="button" class="pw-toggle" data-pw="li-pw">显示</button></div>
+      </label>
+      <div class="err" id="li-err"></div>
+      <div class="modal-actions">
+        <button class="btn" id="li-submit">登录</button>
+        <button class="btn ghost" data-action="register-open">没有账号？去注册</button>
+      </div>
+      <div class="modal-foot"><button class="link" data-close>以游客身份继续使用</button></div>
+    </div>
+  `);
+  const submit = async ()=>{
+    const acc = document.getElementById('li-acc').value.trim();
+    const pw  = document.getElementById('li-pw').value;
+    const err = document.getElementById('li-err');
+    const btn = document.getElementById('li-submit');
+    if(!acc){ err.textContent='请输入账号'; return; }
+    btn.disabled = true; btn.textContent='登录中…';
+    try{
+      await api.login(acc, pw);
+      closeModal();
+      state.view='normal'; state.panel='data';
+      DB.othersCache = null;
+      render();
+    }catch(e){
+      err.textContent = e.message || '登录失败';
+      btn.disabled = false; btn.textContent='登录';
+    }
+  };
+  document.getElementById('li-submit').onclick = submit;
+  document.getElementById('li-pw').addEventListener('keydown', e=>{ if(e.key==='Enter') submit(); });
+  setTimeout(()=>{ const el=document.getElementById('li-acc'); if(el) el.focus(); }, 40);
+}
+
+function openRegister(){
+  openModal(`
+    <div class="modal-head">
+      <div><div class="modal-title">注册账号</div>
+      <div class="modal-sub">填写的信息将决定你的测试内容与教学进度</div></div>
+      <button class="x" data-close>&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="hint">密码没有任何格式要求；可随时点击输入框右侧的「显示」查看。${isCloud()?'当前为云端模式，数据将同步到服务器。':'当前为本地模式，账号仅保存在本浏览器。'}</div>
+      <label class="field"><span>学校 <em>*</em></span><input id="rg-school" type="text" value="${esc(SCHOOL_DEFAULT)}"></label>
+      <label class="field"><span>姓名或网络昵称 <em>*</em></span><input id="rg-name" type="text" placeholder="例如：张明远"></label>
+      <div class="row2">
+        <label class="field"><span>年级 <em>*</em></span>
+          <select id="rg-grade">${GRADES.map(g=>`<option>${g}</option>`).join('')}</select>
+        </label>
+        <label class="field"><span>班级 <em>*</em></span><input id="rg-class" type="text" placeholder="例如：2班"></label>
+      </div>
+      <label class="field"><span>登录账号（选填，默认使用姓名/昵称）</span><input id="rg-acc" type="text" placeholder="留空则使用姓名/昵称作为账号"></label>
+      <label class="field"><span>密码 <em>*</em></span>
+        <div class="pw"><input id="rg-pw" type="password" placeholder="密码没有格式要求">
+        <button type="button" class="pw-toggle" data-pw="rg-pw">显示</button></div>
+      </label>
+      <label class="field"><span>电子邮件（选填）</span><input id="rg-email" type="email" placeholder="example@mail.com"></label>
+      <label class="field"><span>其它信息（选填）</span><input id="rg-extra" type="text" placeholder="例如：兴趣爱好、备注等"></label>
+      <div class="err" id="rg-err"></div>
+      <div class="modal-actions">
+        <button class="btn" id="rg-submit">注册并登录</button>
+        <button class="btn ghost" data-action="login-open">已有账号？去登录</button>
+      </div>
+    </div>
+  `);
+  document.getElementById('rg-submit').onclick = async ()=>{
+    const school = document.getElementById('rg-school').value.trim();
+    const name   = document.getElementById('rg-name').value.trim();
+    const grade  = document.getElementById('rg-grade').value;
+    const cls    = document.getElementById('rg-class').value.trim();
+    const accIn  = document.getElementById('rg-acc').value.trim();
+    const pw     = document.getElementById('rg-pw').value;
+    const email  = document.getElementById('rg-email').value.trim();
+    const extra  = document.getElementById('rg-extra').value.trim();
+    const err    = document.getElementById('rg-err');
+    const btn    = document.getElementById('rg-submit');
+    if(!school){ err.textContent='请填写学校'; return; }
+    if(!name){ err.textContent='请填写姓名或网络昵称'; return; }
+    if(!cls){ err.textContent='请填写班级'; return; }
+    if(!pw){ err.textContent='请设置密码'; return; }
+    btn.disabled = true; btn.textContent='注册中…';
+    try{
+      let acc = accIn || name;
+      if(!isCloud()){
+        if(DB.users[acc]){
+          const base = acc; let i = 2;
+          while(DB.users[base+i]) i++;
+          acc = base + i;
+        }
+      }
+      await api.register({
+        account: acc, password: pw, school, name, grade,
+        className: cls, email, extra
+      });
+      closeModal();
+      state.view='normal'; state.panel='data';
+      DB.othersCache = null;
+      render();
+    }catch(e){
+      err.textContent = e.message || '注册失败';
+      btn.disabled = false; btn.textContent='注册并登录';
+    }
+  };
+  setTimeout(()=>{ const el=document.getElementById('rg-name'); if(el) el.focus(); }, 40);
+}
+
+function openEditProfile(){
+  const u = currentUser();
+  if(!u) return;
+  openModal(`
+    <div class="modal-head">
+      <div><div class="modal-title">修改账号信息</div>
+      <div class="modal-sub">账号：${esc(u.account)}（不可修改）</div></div>
+      <button class="x" data-close>&times;</button>
+    </div>
+    <div class="modal-body">
+      <label class="field"><span>学校</span><input id="ed-school" type="text" value="${esc(u.school)}"></label>
+      <label class="field"><span>姓名或网络昵称</span><input id="ed-name" type="text" value="${esc(u.name)}"></label>
+      <div class="row2">
+        <label class="field"><span>年级</span><select id="ed-grade">${GRADES.map(g=>`<option ${g===u.grade?'selected':''}>${g}</option>`).join('')}</select></label>
+        <label class="field"><span>班级</span><input id="ed-class" type="text" value="${esc(u.className)}"></label>
+      </div>
+      <label class="field"><span>新密码（留空表示不修改）</span>
+        <div class="pw"><input id="ed-pw" type="password" placeholder="留空则不修改密码">
+        <button type="button" class="pw-toggle" data-pw="ed-pw">显示</button></div>
+      </label>
+      <label class="field"><span>电子邮件（选填）</span><input id="ed-email" type="email" value="${esc(u.email)}"></label>
+      <label class="field"><span>其它信息（选填）</span><input id="ed-extra" type="text" value="${esc(u.extra)}"></label>
+      <div class="err" id="ed-err"></div>
+      <div class="modal-actions">
+        <button class="btn" id="ed-submit">保存修改</button>
+        <button class="btn ghost" data-close>取消</button>
+      </div>
+    </div>
+  `);
+  document.getElementById('ed-submit').onclick = async ()=>{
+    const name = document.getElementById('ed-name').value.trim();
+    const err  = document.getElementById('ed-err');
+    if(!name){ err.textContent='姓名或昵称不能为空'; return; }
+    const patch = {
+      school: document.getElementById('ed-school').value.trim() || SCHOOL_DEFAULT,
+      name,
+      grade: document.getElementById('ed-grade').value,
+      className: document.getElementById('ed-class').value.trim(),
+      email: document.getElementById('ed-email').value.trim(),
+      extra: document.getElementById('ed-extra').value.trim()
+    };
+    const np = document.getElementById('ed-pw').value;
+    if(np) patch.password = np;
+    try{
+      await api.updateMe(patch);
+      closeModal(); render();
+    }catch(e){ err.textContent = e.message || '保存失败'; }
+  };
+}
+
+/* ---------- 云端设置 ---------- */
+function openSettings(){
+  openModal(`
+    <div class="modal-head">
+      <div><div class="modal-title">云端设置</div>
+      <div class="modal-sub">配置后自动切换为多人同步模式；留空则使用本地模式</div></div>
+      <button class="x" data-close>&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="hint">Supabase 用于存储用户与成绩；AI 代理用于隐藏 API Key。留空即使用本地模式（数据只在本浏览器）。</div>
+      <label class="field"><span>Supabase URL</span>
+        <input id="st-url" type="text" placeholder="https://xxxx.supabase.co" value="${esc(CONFIG.SUPABASE_URL)}">
+      </label>
+      <label class="field"><span>Supabase anon key</span>
+        <input id="st-key" type="text" placeholder="eyJhbGciOi..." value="${esc(CONFIG.SUPABASE_ANON_KEY)}">
+      </label>
+      <label class="field"><span>AI 出题代理地址</span>
+        <input id="st-ai" type="text" placeholder="https://your-worker.workers.dev/generate" value="${esc(CONFIG.AI_PROXY_URL)}">
+      </label>
+      <div class="err" id="st-err"></div>
+      <div class="modal-actions">
+        <button class="btn" id="st-save">保存并刷新</button>
+        <button class="btn ghost" data-close>取消</button>
+      </div>
+      <div class="modal-foot" style="font-size:12px;color:var(--ink-2);line-height:1.7;text-align:left;margin-top:14px">
+        提示：GitHub Pages 是纯静态托管，不能直接调用 AI API。你需要部署一个代理（如 Cloudflare Worker）来隐藏 Key。详见下方说明。
+      </div>
+    </div>
+  `);
+  document.getElementById('st-save').onclick = ()=>{
+    const url = document.getElementById('st-url').value.trim();
+    const key = document.getElementById('st-key').value.trim();
+    const ai  = document.getElementById('st-ai').value.trim();
+    if((url && !key) || (!url && key)){
+      document.getElementById('st-err').textContent = 'Supabase URL 与 key 需要同时填写';
+      return;
+    }
+    localStorage.setItem('sms_config', JSON.stringify({
+      SUPABASE_URL: url, SUPABASE_ANON_KEY: key, AI_PROXY_URL: ai
+    }));
+    location.reload();
+  };
+}
+
+/* =========================================================
+   10. 事件
+   ========================================================= */
+document.addEventListener('click', async (e)=>{
+  if(e.target.closest('[data-close]')){ closeModal(); return; }
+  const pwBtn = e.target.closest('[data-pw]');
+  if(pwBtn){
+    const inp = document.getElementById(pwBtn.dataset.pw);
+    if(inp){
+      const show = inp.type==='password';
+      inp.type = show?'text':'password';
+      pwBtn.textContent = show?'隐藏':'显示';
+    }
+    return;
+  }
+  const el = e.target.closest('[data-action]');
+  if(!el) return;
+  const a = el.dataset.action;
+  switch(a){
+    case 'nav':
+      state.panel = el.dataset.panel; state.view='normal';
+      if(state.panel==='others' && isCloud() && currentUser() && !DB.othersCache){
+        state.loadingOthers = true; render();
+        try{ DB.othersCache = await api.fetchStudents(); save(); }
+        catch(err){ console.warn(err); DB.othersCache = []; }
+        state.loadingOthers = false;
+      }
+      render();
+      break;
+    case 'login-open':    openLogin(); break;
+    case 'register-open': openRegister(); break;
+    case 'edit-profile':  openEditProfile(); break;
+    case 'settings-open': openSettings(); break;
+    case 'logout':
+      DB.currentAccount = null; DB.currentUserId = null;
+      DB.othersCache = null;
+      save();
+      state.view='normal'; state.panel='data';
+      render();
+      break;
+    case 'set-difficulty': setDifficulty(el.dataset.d); break;
+    case 'start-test': await startTest(); break;
+    case 'submit-test': await submitTest(); break;
+    case 'cancel-test':
+      if(confirm('确定放弃本次测试吗？已作答内容不会保存。')){
+        state.currentTest = null; state.view='normal'; render();
+      }
+      break;
+    case 'back-home':
+      state.view='normal'; state.reviewRecord=null; render(); break;
+    case 'review': {
+      const rec = findRecordByTs(el.dataset.ts);
+      if(rec){ state.reviewRecord = rec; state.view='review'; render(); window.scrollTo({top:0}); }
+      break;
+    }
+    case 'review-last':
+      state.reviewRecord = state.lastRecord;
+      state.view='review'; render(); window.scrollTo({top:0});
+      break;
+  }
+});
+
+document.addEventListener('change', (e)=>{
+  const inp = e.target;
+  if(inp.matches && inp.matches('input[type="radio"][name^="q"]') && state.currentTest){
+    const idx = Number(inp.name.slice(1));
+    state.currentTest.answers[idx] = Number(inp.value);
+  }
+  if(inp.id === 'guestGrade'){
+    DB.guest.grade = inp.value; save(); render();
+  }
+});
+
+document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeModal(); });
+
+/* =========================================================
+   11. 启动
+   ========================================================= */
+(async function init(){
+  load();
+  seedData();
+  save();
+  render();
+})();
+</script>
+</body>
+</html>
