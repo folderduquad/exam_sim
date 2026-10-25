@@ -149,9 +149,9 @@ tr:last-child td{border-bottom:none}
    ========================================================= */
 const CONFIG = {
   // Supabase 项目地址，如 https://xxxx.supabase.co（留空 = 纯本地模式）
-  SUPABASE_URL: '',
+  SUPABASE_URL: 'https://exam-sim.supabase.co',
   // Supabase anon public key（可公开，但要配合 RLS 策略）
-  SUPABASE_ANON_KEY: '',
+  SUPABASE_ANON_KEY: 'sb_publishable_eQiCRUrCSoD-Idpcep6xFA_DDrtooew',
   // AI 出题代理地址（Cloudflare Worker / Vercel 等，留空 = 本地出题引擎）
   AI_PROXY_URL: ''
 };
@@ -691,7 +691,7 @@ function panelContent(){
         <div><span style="color:var(--ink-2)">学校：</span><b>${esc(schoolOf())}</b></div>
         <div><span style="color:var(--ink-2)">年级：</span><b>${esc(grade)}</b></div>
         <div><span style="color:var(--ink-2)">学科：</span><b>数学</b></div>
-        <div><span style="color:var(--ink-2)">考试难度：</span><b style="color:var(--blue-d)">${esc(diff)}</b></div>
+        <div><span style="color:var(--ink-2)">测试难度：</span><b style="color:var(--blue-d)">${esc(diff)}</b></div>
         <div><span style="color:var(--ink-2)">题量：</span><b>${QCOUNT} 题（选择题）</b></div>
         <div style="margin-top:10px;color:var(--ink-2)">覆盖知识点：</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
@@ -718,7 +718,7 @@ function panelDifficulty(){
     <div class="panel-title">测试难度</div>
     <div class="panel-desc">选择本次测试的难度，出题引擎会据此调整题目类型与计算复杂度。</div>
     <div class="card" style="margin-bottom:18px">
-      <h3>本次考试难度：<span style="color:var(--blue)">${esc(cur)}</span></h3>
+      <h3>本次测试难度：<span style="color:var(--blue)">${esc(cur)}</span></h3>
       <div style="font-size:13px;color:var(--ink-2);line-height:1.8">${desc[cur]}</div>
     </div>
     <div class="diff-grid">
@@ -740,7 +740,7 @@ function panelOthers(){
       <div class="card lock">
         <div class="lock-icon">🔒</div>
         <div style="font-size:15px;font-weight:600;margin-bottom:6px">此面板仅对已登录学生开放</div>
-        <div style="font-size:13px;color:var(--ink-2)">登录后即可看到其他同学的考试面板与成绩概况</div>
+        <div style="font-size:13px;color:var(--ink-2)">登录后即可看到其他同学的测试面板与成绩概况</div>
         <div class="modal-actions">
           <button class="btn" data-action="login-open">立即登录</button>
           <button class="btn ghost" data-action="register-open">注册账号</button>
@@ -759,7 +759,7 @@ function panelOthers(){
   }
   let body;
   if(!others.length){
-    body = `<div class="card"><div class="empty"><b>暂时还没有其他同学</b>邀请同学注册后即可在这里看到他们的考试面板</div></div>`;
+    body = `<div class="card"><div class="empty"><b>暂时还没有其他同学</b>邀请同学注册后即可在这里看到他们的测试面板</div></div>`;
   }else{
     body = `<div class="stu-grid">${others.map(o=>{
       const h = (o.history||[]).slice().sort((a,b)=>b.ts-a.ts);
@@ -786,7 +786,7 @@ function panelOthers(){
   }
   return `
     <div class="panel-title">其他学生</div>
-    <div class="panel-desc">以下是其他已登录同学的考试面板概览。</div>
+    <div class="panel-desc">以下是其他已登录同学的测试面板概览。</div>
     ${body}`;
 }
 
